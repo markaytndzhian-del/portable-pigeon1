@@ -1,18 +1,359 @@
-# This .gitignore is appropriate for repositories deployed to GitHub Pages and using
-# a Gemfile as specified at https://github.com/github/pages-gem#conventional
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Portable Pigeon</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background: #1a1a1a;
+            color: #eee;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background-image: radial-gradient(circle at 50% 50%, #2a2a2a 0%, #1a1a1a 100%);
+        }
 
-# Basic Jekyll gitignores (synchronize to Jekyll.gitignore)
-_site/
-.sass-cache/
-.jekyll-cache/
-.jekyll-metadata
+        h1, h2 {
+            color: #ffaa00;
+            text-shadow: 2px 2px 0px #000;
+            text-align: center;
+        }
 
-# Additional Ruby/bundler ignore for when you run: bundle install
-/vendor
+        #auth-box, #chat-box-container {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            padding: 20px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.7);
+            border-radius: 8px;
+        }
 
-# Specific ignore for GitHub Pages
-# GitHub Pages will always use its own deployed version of pages-gem
-# This means GitHub Pages will NOT use your Gemfile.lock and therefore it is
-# counterproductive to check this file into the repository.
-# Details at https://github.com/github/pages-gem/issues/768
-Gemfile.lock
+        #chat-box {
+            height: 300px;
+            overflow-y: scroll;
+            border: 1px solid #444;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #1e1e1e;
+            border-radius: 4px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #online-box {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            border-radius: 4px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        #online-box h3 {
+            margin: 0 0 5px 0;
+            color: #ffaa00;
+            font-size: 0.9em;
+        }
+
+        .online-user {
+            display: inline-block;
+            background: #00aa00;
+            color: #000;
+            padding: 2px 8px;
+            margin: 2px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        #sticker-panel {
+            display: none;
+            padding: 5px;
+            margin-bottom: 10px;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            border-radius: 4px;
+        }
+
+        #sticker-panel img {
+            width: 40px;
+            height: 40px;
+            margin: 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: transform 0.2s;
+        }
+
+        #sticker-panel img:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 10px #ffaa00;
+        }
+
+        #sticker-btn {
+            background: none;
+            border: 1px solid #555;
+            color: #ffaa00;
+            font-size: 1.2em;
+            cursor: pointer;
+            border-radius: 4px;
+            padding: 5px 10px;
+            margin-right: 5px;
+        }
+
+        #sticker-btn:active {
+            background: #333;
+        }
+
+        #clear-btn {
+            background: #444;
+            border: 1px solid #555;
+            color: #ffaa00;
+            font-size: 0.8em;
+            cursor: pointer;
+            border-radius: 4px;
+            padding: 5px 10px;
+            margin-right: 5px;
+        }
+
+        #clear-btn:active {
+            background: #333;
+        }
+
+        #message-input, #secret-key-input {
+            width: 60%;
+            padding: 12px 10px;
+            background: #1e1e1e;
+            color: #eee;
+            border: 1px solid #555;
+            outline: none;
+            border-radius: 4px;
+            font-size: 1em;
+            margin-bottom: 10px;
+        }
+
+        #send-btn, #auth-btn {
+            padding: 10px 15px;
+            background: #ffaa00;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+            border-radius: 4px;
+            font-size: 1em;
+            transition: background 0.2s;
+        }
+
+        #send-btn:active, #auth-btn:active {
+            background: #ffcc66;
+            transform: scale(0.95);
+        }
+
+        .msg {
+            margin-bottom: 10px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 4px;
+            word-wrap: break-word;
+        }
+
+        .msg span {
+            font-weight: bold;
+            color: #ffaa00;
+        }
+
+        .msg .time {
+            font-size: 0.7em;
+            color: #777;
+            display: block;
+        }
+        
+        .msg img.sticker-in-chat {
+            max-width: 100px;
+            max-height: 100px;
+            display: block;
+            margin-top: 5px;
+        }
+
+        input[type="text"] {
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="auth-box">
+        <h2>🕊️ Portable Pigeon</h2>
+        <p>Enter your secret key:</p>
+        <input type="text" id="secret-key-input" placeholder="Your secret key..." autocomplete="off">
+        <button id="auth-btn">Authenticate</button>
+        <p id="error-msg" style="color: red; display: none;">Invalid key!</p>
+    </div>
+
+    <div id="chat-box-container" style="display: none;">
+        <h1>🕊️ Portable Pigeon</h1>
+        <div id="online-box">
+            <h3>Online Pigeons:</h3>
+            <div id="online-list">Waiting for friends...</div>
+        </div>
+        <div id="chat-box"></div>
+        <div id="sticker-panel">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='80'%3E🕊️%3C/text%3E%3C/svg%3E" alt="Pigeon1" onclick="sendSticker(this.src)">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='80'%3E😎%3C/text%3E%3C/svg%3E" alt="Pigeon2" onclick="sendSticker(this.src)">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='80'%3E🔥%3C/text%3E%3C/svg%3E" alt="Pigeon3" onclick="sendSticker(this.src)">
+        </div>
+        <div style="display: flex; gap: 5px; align-items: center;">
+            <button id="sticker-btn">😊</button>
+            <button id="clear-btn">Clear Chat</button>
+            <input type="text" id="message-input" placeholder="Type a message...">
+            <button id="send-btn">Send</button>
+        </div>
+        <p style="font-size: 0.8em; color: #555;">Logged in as: <span id="current-nickname"></span></p>
+    </div>
+
+    <script>
+        const BUILT_IN_KEYS = {
+            "SVAS356": "Mark",
+            "TGH456": "Erofey",
+            "PIGEON42": "Klim"
+        };
+
+        let messages = [];
+        let onlineUsers = {};
+        let currentUser = null;
+
+        const authBox = document.getElementById('auth-box');
+        const chatContainer = document.getElementById('chat-box-container');
+        const secretKeyInput = document.getElementById('secret-key-input');
+        const authBtn = document.getElementById('auth-btn');
+        const errorMsg = document.getElementById('error-msg');
+        const currentNicknameSpan = document.getElementById('current-nickname');
+        const chatBox = document.getElementById('chat-box');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const onlineList = document.getElementById('online-list');
+        const stickerPanel = document.getElementById('sticker-panel');
+        const stickerBtn = document.getElementById('sticker-btn');
+        const clearBtn = document.getElementById('clear-btn');
+
+        function updateOnlineList() {
+            onlineList.innerHTML = '';
+            const users = Object.entries(onlineUsers);
+            if (users.length > 0) {
+                users.forEach(([name, status]) => {
+                    if (status === 'online') {
+                        const userDiv = document.createElement('span');
+                        userDiv.className = 'online-user';
+                        userDiv.textContent = '🟢 ' + name;
+                        onlineList.appendChild(userDiv);
+                    }
+                });
+            } else {
+                onlineList.textContent = 'No one is here...';
+            }
+        }
+
+        function addMessage(nickname, text, sticker) {
+            const msg = { nickname, text, sticker, timestamp: Date.now() };
+            messages.push(msg);
+            displayMessage(msg);
+            localStorage.setItem('pigeon_messages', JSON.stringify(messages));
+        }
+
+        function displayMessage(msg) {
+            const div = document.createElement('div');
+            div.className = 'msg';
+            const time = new Date(msg.timestamp);
+            const hours = String(time.getHours()).padStart(2, '0');
+            const minutes = String(time.getMinutes()).padStart(2, '0');
+            const seconds = String(time.getSeconds()).padStart(2, '0');
+            const timeStr = `${hours}:${minutes}:${seconds}`;
+            
+            let content = `<span>${msg.nickname}:</span>`;
+            if (msg.text) content += ` ${msg.text}`;
+            if (msg.sticker) content += `<br><img src="${msg.sticker}" class="sticker-in-chat" alt="Sticker">`;
+            content += ` <span class="time">[${timeStr}]</span>`;
+            
+            div.innerHTML = content;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function loadMessages() {
+            const saved = localStorage.getItem('pigeon_messages');
+            if (saved) {
+                messages = JSON.parse(saved);
+                chatBox.innerHTML = '';
+                messages.forEach(msg => displayMessage(msg));
+            }
+        }
+
+        stickerBtn.addEventListener('click', () => {
+            stickerPanel.style.display = stickerPanel.style.display === 'none' ? 'block' : 'none';
+        });
+
+        window.sendSticker = function(src) {
+            if (currentUser) {
+                addMessage(currentUser, null, src);
+                stickerPanel.style.display = 'none';
+            }
+        };
+
+        clearBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear all messages?')) {
+                messages = [];
+                localStorage.removeItem('pigeon_messages');
+                chatBox.innerHTML = '';
+            }
+        });
+
+        authBtn.addEventListener('click', () => {
+            const key = secretKeyInput.value.trim();
+            if (!key) return;
+
+            errorMsg.style.display = 'none';
+            
+            if (BUILT_IN_KEYS[key]) {
+                currentUser = BUILT_IN_KEYS[key];
+                
+                authBox.style.display = 'none';
+                chatContainer.style.display = 'block';
+                currentNicknameSpan.textContent = currentUser;
+                onlineUsers[currentUser] = 'online';
+                updateOnlineList();
+                loadMessages();
+            } else {
+                errorMsg.style.display = 'block';
+                secretKeyInput.value = '';
+            }
+        });
+
+        sendBtn.addEventListener('click', () => {
+            const text = messageInput.value;
+            if (text && currentUser) {
+                addMessage(currentUser, text, null);
+                messageInput.value = '';
+            }
+        });
+
+        loadMessages();
+
+        window.addEventListener('beforeunload', () => {
+            if (currentUser) {
+                onlineUsers[currentUser] = 'offline';
+            }
+        });
+    </script>
+</body>
+</html>
